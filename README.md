@@ -34,8 +34,8 @@ alarm and three inside it clear the alarm, so one spike stays quiet. The chart
 gets a red outline, the header says which measure and which way, and the
 service can make a noise or run a hook.
 
-A sensor that stopped answering is its own alarm. A frozen chart otherwise
-looks exactly like calm air, which is the failure mode that matters.
+A sensor that has stopped answering raises the alarm too. Without that, a
+frozen chart looks exactly like clean air.
 
 Silence the sound without hiding the charts:
 
@@ -52,8 +52,8 @@ Two hooks, neither assuming a sound card:
   speaker.
 - `air.alarm.command` runs a shell line whenever the set of alarms *changes*,
   with `ALARM_STATE`, `ALARM_MEASURES` and `ALARM_TEXT` in the environment. It
-  fires on transitions only, never on the repeat, which is what a push
-  notification wants.
+  fires on transitions only and never on the repeat, so a push
+  notification is sent once per alarm rather than once per reading.
 
 Anything needing the machine's sound hardware belongs in a user service polling
 `/air/data`: this one runs as a `DynamicUser` with no seat and no access to
@@ -111,7 +111,7 @@ curl 'https://www.mvg.de/api/bgw-pt/v3/locations?query=<name>'
 Every option is documented in [`module.nix`](module.nix). Without flakes it is
 an ordinary NixOS module, and `package.nix` an ordinary `callPackage` file.
 
-### Where you are stays yours
+### Your location is not in this repository
 
 Coordinates, stop ids and the address of a sensor on your LAN say where you
 live. None of them are in this repository, and none of them have defaults here:
