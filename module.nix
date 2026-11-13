@@ -6,6 +6,9 @@
 }: let
   cfg = config.services.wall-dashboards;
 
+  # Only the enabled panels are compiled in.
+  enabledPanels = lib.filter (panel: cfg.${panel}.enable) (import ./panels.nix);
+
   limitModule = lib.types.submodule {
     options = {
       min = lib.mkOption {
@@ -86,9 +89,9 @@ in {
 
     package = lib.mkOption {
       type = lib.types.package;
-      default = pkgs.callPackage ./package.nix {};
-      defaultText = lib.literalExpression "pkgs.callPackage ./package.nix {}";
-      description = "The build to run.";
+      default = pkgs.callPackage ./package.nix {panels = enabledPanels;};
+      defaultText = lib.literalExpression "a build with only the enabled panels";
+      description = "The build to run. It must include every enabled panel.";
     };
 
     listen = lib.mkOption {
@@ -303,6 +306,10 @@ in {
 
   config = lib.mkIf cfg.enable {
     assertions = [
+      {
+        assertion = enabledPanels != [];
+        message = "services.wall-dashboards needs at least one panel enabled.";
+      }
       {
         assertion = !cfg.transit.enable || cfg.transit.stops != [];
         message = "services.wall-dashboards.transit needs at least one stop.";

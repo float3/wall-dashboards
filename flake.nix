@@ -17,10 +17,10 @@
       wall-dashboards = final.callPackage ./package.nix {};
     };
 
-    packages = forAllSystems (pkgs: {
-      wall-dashboards = pkgs.callPackage ./package.nix {};
-      default = self.packages.${pkgs.system}.wall-dashboards;
-    });
+    # One package per panel besides the full one: `nix run .#air -- config.json`.
+    packages = forAllSystems (pkgs:
+      import ./default.nix {inherit pkgs;}
+      // {default = self.packages.${pkgs.system}.wall-dashboards;});
 
     formatter = forAllSystems (pkgs: pkgs.alejandra);
   };

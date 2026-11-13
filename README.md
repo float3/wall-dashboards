@@ -137,6 +137,18 @@ this service reads at startup. keep that config in a private repository.
 cargo run --release -- config.json
 ```
 
+one panel alone, without compiling the others or a TLS stack:
+
+```sh
+cargo run --release --no-default-features --features air -- config.json
+nix run github:float3/wall-dashboards#air -- config.json
+nix-shell --arg panels '["air"]'          # wall-dashboards on PATH
+nix-build -A air                          # likewise weather, transit
+```
+
+a binary refuses a config section for a panel it was built without. the NixOS
+module builds only the panels that are enabled.
+
 then open <http://127.0.0.1:8123>. the config file is the only input; the
 NixOS module is a typed front end that writes one.
 

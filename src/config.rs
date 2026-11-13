@@ -51,6 +51,7 @@ pub struct Limit {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(not(feature = "air"), allow(dead_code))]
 pub struct Air {
     /// Base URL of the monitor's local API; it serves /measures/current.
     pub sensor_url: String,
@@ -80,6 +81,7 @@ impl Air {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(not(feature = "air"), allow(dead_code))]
 pub struct Alarm {
     /// Readings in a row outside a range before the alarm is raised, and
     /// inside it again before it clears. Keeps one spike from crying wolf.
@@ -137,6 +139,7 @@ impl Default for Alarm {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(not(feature = "weather"), allow(dead_code))]
 pub struct Weather {
     pub latitude: f64,
     pub longitude: f64,
@@ -165,6 +168,7 @@ impl Weather {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(not(feature = "transit"), allow(dead_code))]
 pub struct Transit {
     pub stops: Vec<Stop>,
     #[serde(default = "Transit::default_poll")]
@@ -179,6 +183,7 @@ impl Transit {
 
 #[derive(Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(not(feature = "transit"), allow(dead_code))]
 pub struct Stop {
     /// MVG's identifier, e.g. the one behind /api/bgw-pt/v3/locations?query=.
     pub global_id: String,

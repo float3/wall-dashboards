@@ -6,12 +6,18 @@
 //! that is already shaped. One wall display should not turn into a hundred
 //! requests an hour just because four pages are rotating past it.
 
-use std::sync::{Arc, Mutex};
+#[cfg(feature = "weather")]
+use std::sync::Arc;
+#[cfg(any(feature = "weather", feature = "transit"))]
+use std::sync::Mutex;
+#[cfg(feature = "weather")]
 use std::thread;
 use std::time::Duration;
 
+#[cfg(any(feature = "weather", feature = "transit"))]
 use serde_json::json;
 
+#[cfg(any(feature = "weather", feature = "transit"))]
 use crate::now;
 
 pub fn get_json(url: &str) -> Result<serde_json::Value, String> {
@@ -32,6 +38,7 @@ pub fn get_json(url: &str) -> Result<serde_json::Value, String> {
     serde_json::from_str(&text).map_err(|e| e.to_string())
 }
 
+#[cfg(any(feature = "weather", feature = "transit"))]
 #[derive(Default)]
 pub struct Cached {
     /// The last answer that parsed, however old.
@@ -41,11 +48,13 @@ pub struct Cached {
     pub last_error: Option<String>,
 }
 
+#[cfg(any(feature = "weather", feature = "transit"))]
 pub struct Feed {
     pub state: Mutex<Cached>,
     pub interval: u64,
 }
 
+#[cfg(any(feature = "weather", feature = "transit"))]
 impl Feed {
     pub fn new(interval: u64) -> Feed {
         Feed {
@@ -72,6 +81,7 @@ impl Feed {
 /// Refetch `url` forever, keeping the last good answer on failure. `shape` is
 /// applied once per fetch rather than once per request, since the page asks
 /// far more often than upstream changes.
+#[cfg(feature = "weather")]
 pub fn poll_forever(
     feed: Arc<Feed>,
     url: impl Fn() -> String + Send + 'static,
