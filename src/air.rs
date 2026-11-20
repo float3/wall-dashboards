@@ -268,11 +268,15 @@ pub fn poll_forever(panel: Arc<Panel>) {
                 }
                 state.readings.push_back(row.clone());
                 let cutoff = now() - panel.cfg.retention_hours * 3600.0;
-                while state.readings.front().is_some_and(|r| (r.t as f64) < cutoff) {
+                while state
+                    .readings
+                    .front()
+                    .is_some_and(|r| (r.t as f64) < cutoff)
+                {
                     state.readings.pop_front();
                 }
                 polls += 1;
-                if polls % 120 == 0 {
+                if polls.is_multiple_of(120) {
                     let _ = panel.compact(&state);
                 }
                 let verdict = judge(&row, &panel.cfg.limits);
