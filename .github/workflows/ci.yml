@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust:
+    name: Rust
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+
+      - name: Check the formatting
+        run: cargo fmt --check
+
+      - name: Lint
+        run: cargo clippy --locked --all-targets -- -D warnings
+
+      - name: Test
+        run: cargo test --locked
+
+  nix:
+    name: Nix
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31
+        with:
+          extra_nix_config: |
+            accept-flake-config = false
+            experimental-features = nix-command flakes
+
+      - name: Check the flake
+        run: nix flake check --print-build-logs
+
+      - name: Build the package
+        run: nix build --print-build-logs
+
+      # Builds the systemd unit and the panel config from every option, so a
+      # module change that no longer evaluates fails here and not on the host.
+      - name: Evaluate the NixOS module
+        run: |
+          nix build --no-link --print-build-logs --impure --expr '
+            let
+              flake = builtins.getFlake "git+file://'"$PWD"'";
+              system = flake.inputs.nixpkgs.lib.nixosSystem {
+                system = "x86_64-linux";
+                modules = [
+                  flake.nixosModules.default
+                  {
+                    boot.isContainer = true;
+                    system.stateVersion = "26.05";
+                    services.wall-dashboards = {
+                      enable = true;
+                      air = {
+                        enable = true;
+                        sensorUrl = "http://10.0.0.5";
+                      };
+                      weather = {
+                        enable = true;
+                        latitude = 48.14;
+                        longitude = 11.58;
+                      };
+                      transit = {
+                        enable = true;
+                        stops = [
+                          {
+                            globalId = "de:09162:2";
+                            name = "Marienplatz";
+                          }
+                        ];
+                      };
+                    };
+                  }
+                ];
+              };
+            in system.config.systemd.units."wall-dashboards.service".unit'
