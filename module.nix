@@ -264,8 +264,11 @@ in {
 
       timezone = lib.mkOption {
         type = lib.types.str;
-        default = config.time.timeZone or "auto";
-        defaultText = lib.literalExpression "config.time.timeZone";
+        default =
+          if config.time.timeZone != null
+          then config.time.timeZone
+          else "auto";
+        defaultText = lib.literalExpression ''if config.time.timeZone != null then config.time.timeZone else "auto"'';
         description = "Timezone the forecast's days and sun times are given in.";
       };
 
